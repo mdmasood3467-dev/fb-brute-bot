@@ -15,6 +15,7 @@ def home():
     return "Bot is Running!"
 
 def run_web():
+    # Render ডিফল্টভাবে ১০০০০ পোর্ট ব্যবহার করে
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
 
@@ -109,4 +110,4 @@ if __name__ == "__main__":
     t.daemon = True
     t.start()
     bot.polling(none_stop=True)
-        
+  
